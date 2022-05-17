@@ -46,7 +46,7 @@ void pioInit() {
       GPIO_BASE);       // Offset to GPIO peripheral
 
 	if (reg_map == MAP_FAILED) {
-      printf("gpio mmap error %d\n", (int)reg_map);
+      printf("gpio mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -62,7 +62,7 @@ void pioInit() {
       SPI0_BASE);       // Offset to SPI peripheral
 
     if (reg_map == MAP_FAILED) {
-      printf("spi mmap error %d\n", (int)reg_map);
+      printf("spi mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -78,7 +78,7 @@ void pioInit() {
       PWM_BASE);       // Offset to PWM peripheral
 
     if (reg_map == MAP_FAILED) {
-      printf("pwm mmap error %d\n", (int)reg_map);
+      printf("pwm mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -94,7 +94,7 @@ void pioInit() {
       SYS_TIMER_BASE);       // Offset to Timer peripheral
 
     if (reg_map == MAP_FAILED) {
-      printf("sys timer mmap error %d\n", (int)reg_map);
+      printf("sys timer mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -111,7 +111,7 @@ void pioInit() {
 
 
     if (reg_map == MAP_FAILED) {
-      printf("arm timer mmap error %d\n", (int)reg_map);
+      printf("arm timer mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -127,7 +127,7 @@ void pioInit() {
       UART_BASE);       // Offset to UART peripheral
 
     if (reg_map == MAP_FAILED) {
-      printf("uart mmap error %d\n", (int)reg_map);
+      printf("uart mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -143,7 +143,7 @@ void pioInit() {
       CM_PWM_BASE);       // Offset to ARM timer peripheral
 
     if (reg_map == MAP_FAILED) {
-      printf("cm_pwm mmap error %d\n", (int)reg_map);
+      printf("cm_pwm mmap error %p\n", reg_map);
       close(mem_fd);
       exit(-1);
     }
@@ -162,7 +162,7 @@ void noInterrupts(void) {
     //disable interrupts
     IRQ_DISABLE1 = irq1;
     IRQ_DISABLE2 = irq2;
-    IRQ_DISABLE_BASIC = irqbasic; 
+    IRQ_DISABLE_BASIC = irqbasic;
 }
 
 void interrupts(void) {
@@ -214,7 +214,7 @@ void digitalWrites(int pins[], int numPins, int val) {
 
 int digitalReads(int pins[], int numPins) {
     int i, val = digitalRead(pins[0]);
-    
+
     for(i=1; i<numPins; i++) {
         val |= (digitalRead(pins[i]) << i);
     }
@@ -256,12 +256,12 @@ void spiInit(int freq, int settings) {
 
     //Note: clock divisor will be rounded to the nearest power of 2
     SPI0CLK = 250000000/freq;   // set SPI clock to 250MHz / freq
-    SPI0CS = settings;  
-	SPI0CSbits.CLEAR = 3;   // this is very important 
+    SPI0CS = settings;
+	SPI0CSbits.CLEAR = 3;   // this is very important
     SPI0CSbits.TA = 1;          // turn SPI on with the "transfer active" bit
 }
 
- char spiSendReceive(char send){	
+ char spiSendReceive(char send){
 	SPI0FIFO = send;            // send data to slave
 	while(!SPI0CSbits.DONE);	// wait until SPI transmission complete
     return SPI0FIFO;            // return received data
@@ -269,7 +269,7 @@ void spiInit(int freq, int settings) {
 
 short spiSendReceive16(short send) {
     short rec;
-	
+
     SPI0CSbits.TA = 1;          // turn SPI on with the "transfer active" bit
     rec = spiSendReceive((send & 0xFF00) >> 8); // send data MSB first
     rec = (rec << 8) | spiSendReceive(send & 0xFF);
@@ -283,7 +283,7 @@ short spiSendReceive16(short send) {
 
 void uartInit(int baud) {
     uint fb = 12000000/baud; // 3 MHz UART clock
-    
+
     pinMode(14, ALT0);
     pinMode(15, ALT0);
     UART_IBRD = fb >> 6;       // 6 Fract, 16 Int bits of BRD
@@ -323,13 +323,13 @@ void pwmInit() {
     CM_PWMCTL = PWM_CLK_PASSWORD|0x206; // Src = unfiltered 500 MHz CLKD
     CM_PWMDIV = PWM_CLK_PASSWORD|(PLL_CLOCK_DIVISOR << 12); // PWM Freq = 25 MHz
     CM_PWMCTL = CM_PWMCTL|PWM_CLK_PASSWORD|0x10;    // Enable PWM clock
-    while (!CM_PWMCTLbits.BUSY);    // Wait for generator to start    
+    while (!CM_PWMCTLbits.BUSY);    // Wait for generator to start
     PWM_CTLbits.MSEN1 = 1;  // Channel 1 in mark/space mode
     PWM_CTLbits.PWEN1 = 1;  // Enable pwm
 }
 
 /**
- * dut is a value between 0 and 1 
+ * dut is a value between 0 and 1
  * freq is pwm frequency in Hz
  */
 void setPWM(float freq, float dut) {

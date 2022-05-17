@@ -1,16 +1,17 @@
 #ifndef __ARDUCAM_H
 #define __ARDUCAM_H
 #include "bcm283x_board_driver.h"
+
 #include <stdio.h>
 #include <string.h>
-typedef unsigned char uint8_t; 
+typedef unsigned char uint8_t;
 typedef unsigned char byte;
 
 #define JPEG_BUF_SIZE   2*1024*1024 //2M
 #define CMD_BUF_SIZE    512
 
 //ArduCAM CS define
-#define     CAM_CS1         17
+#define     CAM_CS1         8
 #define     CAM_CS2         23
 #define     CAM_CS3         22
 #define     CAM_CS4         24
@@ -34,7 +35,7 @@ typedef unsigned char byte;
 #define JPEG	    1
 #define RAW         2
 
-#define OV7670		0	
+#define OV7670		0
 #define MT9D111_A	1
 #define OV7675		2
 #define OV5642		3
@@ -71,12 +72,12 @@ typedef unsigned char byte;
 #define OV5642_2592x1944	6	//2592x1944
 
 
-#define OV5640_320x240 		0	//320x240 
+#define OV5640_320x240 		0	//320x240
 #define OV5640_352x288		1	//352x288
 #define OV5640_640x480 	    2	//640x480
 #define OV5640_800x480	    3	//800x480
 #define OV5640_1024x768	    4	//1024x768
-#define OV5640_1280x960	    5	//1280x960	
+#define OV5640_1280x960	    5	//1280x960
 #define OV5640_1600x1200	6	//1600x1200
 #define OV5640_2048x1536	7   //2048x1536
 #define OV5640_2592x1944	8	//2592x1944
@@ -101,7 +102,7 @@ typedef unsigned char byte;
 
 
 
-//Color Saturation 
+//Color Saturation
 
 #define Saturation4          0
 #define Saturation3          1
@@ -268,7 +269,7 @@ typedef unsigned char byte;
 #define MAX_FIFO_SIZE		0x7FFFF			//512Kunsigned char
 #else
 #define MAX_FIFO_SIZE		0x7FFFFF		//8Munsigned char
-#endif 
+#endif
 
 /****************************************************/
 /* ArduChip registers definition 											*/
@@ -337,7 +338,7 @@ struct sensor_reg {
 	unsigned int val;
 };
 
-typedef struct  
+typedef struct
 {
     unsigned long  dataLength;
     uint8_t        pu8ImageData[JPEG_BUF_SIZE];
@@ -346,6 +347,7 @@ typedef struct
 }imageData;
 
 
+extern byte sensor_model;
 
 #endif
 class ArduCAM{
@@ -377,20 +379,20 @@ void flush_fifo( void );
 void start_capture( void);
 void clear_fifo_flag(void);
 unsigned char read_fifo(void);
-	
+
 unsigned char read_reg(unsigned char addr);
-void write_reg(unsigned char addr, unsigned char data);	
-	
+void write_reg(unsigned char addr, unsigned char data);
+
 unsigned int read_fifo_length();
 void set_fifo_burst(void);
-	
+
 void set_bit(unsigned char addr, unsigned char bit);
 void clear_bit(unsigned char addr, unsigned char bit);
 unsigned char get_bit(unsigned char addr, unsigned char bit);
 void set_mode(unsigned char mode);
- 
+
 unsigned char bus_write(int address, int value);
-unsigned char bus_read(int address);	
+unsigned char bus_read(int address);
 unsigned char read_fifo_burst(void);
 
 
@@ -411,9 +413,11 @@ protected:
     volatile uint8_t *P_CS;
 	uint8_t B_CS;
 	byte m_fmt;
-	byte sensor_model;
-	byte sensor_addr;
+//	byte sensor_model;
+//	byte sensor_addr;
 };
 extern unsigned int length;
+
+
 
 #endif

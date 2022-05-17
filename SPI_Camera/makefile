@@ -1,6 +1,6 @@
 NAME=run_Arducam_Demo
 CC=gcc
-CFLAGS=-Wall -pthread 
+CFLAGS=-Wall -pthread
 ODIR=obj
 SDIR=src
 
@@ -14,8 +14,12 @@ $(ODIR)/%.o: src/%.c $(DEPS)
 	@mkdir -p $(@D)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
+$(ODIR)/%.o: src/%.cpp $(DEPS)
+	@mkdir -p $(@D)
+	g++ -c -o $@ $< $(CFLAGS)
+
 $(NAME): $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+	g++ -o $@ $^ $(CFLAGS)
 
 .PHONY:	run
 
@@ -23,5 +27,5 @@ run:	$(NAME)
 	sudo ./$(NAME)
 
 .PHONY:	clean
-clean:	
+clean:
 	rm $(NAME) $(ODIR)/*.o

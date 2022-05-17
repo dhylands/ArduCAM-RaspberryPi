@@ -22,11 +22,11 @@ ArduCAM :: ArduCAM(byte mode, int CS){
     switch (sensor_model)
         {
          case OV2640:
-            sensor_addr =0x60; 
+            sensor_addr =0x60;
             break;
          case OV5642:
             sensor_addr = 0x78;
-            break;        
+            break;
         }
 }
 void  ArduCAM::Arducam_CS_Init(void){
@@ -35,12 +35,12 @@ void  ArduCAM::Arducam_CS_Init(void){
 }
 
 
-void ArduCAM::InitCAM() 
+void ArduCAM::InitCAM()
 {
   switch (sensor_model)
   {
     case OV2640:
-    {		
+    {
 	    wrSensorReg8_8(0xff, 0x01);
         wrSensorReg8_8(0x12, 0x80);
     if(m_fmt == JPEG)
@@ -62,7 +62,7 @@ void ArduCAM::InitCAM()
       {
         wrSensorReg16_8(0x3008, 0x80);
         wrSensorRegs16_8(OV5642_QVGA_Preview);
-      
+
         if (m_fmt == JPEG)
         {
           printf("the format is JPEG\r\n");
@@ -73,7 +73,7 @@ void ArduCAM::InitCAM()
           wrSensorReg16_8(0x3801, 0xb0);
           wrSensorReg16_8(0x4407, 0x04);
 
-				
+
         }
         else
         {
@@ -98,13 +98,13 @@ void ArduCAM::InitCAM()
 void ArduCAM:: CS_HIGH()
 {
     delay_us(1);
- 	digitalWrite(B_CS, HIGH);					
+ 	digitalWrite(B_CS, HIGH);
 }
 
 void ArduCAM:: CS_LOW()
 {
     delay_us(1);
- 	digitalWrite(B_CS, LOW);						    
+ 	digitalWrite(B_CS, LOW);
 }
 
 void ArduCAM:: set_format(unsigned char fmt)
@@ -128,7 +128,7 @@ unsigned char ArduCAM:: bus_read(int address)
 }
 
 unsigned char ArduCAM:: bus_write(int address,int value)
-{	
+{
 	CS_LOW();
 	spiSendReceive(address);
 	spiSendReceive(value);
@@ -144,7 +144,7 @@ unsigned char ArduCAM:: read_reg(unsigned char addr)
 }
 void ArduCAM:: write_reg(unsigned char addr, unsigned char data)
 {
-	 bus_write(addr | 0x80, data); 
+	 bus_write(addr | 0x80, data);
 }
 
 unsigned char ArduCAM:: read_fifo()
@@ -181,17 +181,17 @@ unsigned int ArduCAM:: read_fifo_length()
   len2 = read_reg(FIFO_SIZE2);
   len3 = read_reg(FIFO_SIZE3) & 0x7f;
   len = ((len3 << 16) | (len2 << 8) | len1) & 0x07fffff;
-	return len;	
+	return len;
 }
 
-//Set corresponding bit  
+//Set corresponding bit
 void ArduCAM:: set_bit(unsigned char addr, unsigned char bit)
 {
 	unsigned char temp;
 	temp = read_reg(addr);
 	write_reg(addr, temp | bit);
 }
-//Clear corresponding bit 
+//Clear corresponding bit
 void ArduCAM:: clear_bit(unsigned char addr, unsigned char bit)
 {
 	unsigned char temp;
@@ -248,8 +248,48 @@ void ArduCAM:: OV2640_set_JPEG_size(unsigned char size)
 
 
 
+void ArduCAM::OV5640_set_JPEG_size(uint8_t size)
+{
+#if (defined (OV5640_CAM)||defined (OV5640_MINI_5MP_PLUS))
+  switch (size)
+  {
+    case OV5640_320x240:
+      wrSensorRegs16_8(OV5640_QSXGA2QVGA);
+      break;
+    case OV5640_352x288:
+      wrSensorRegs16_8(OV5640_QSXGA2CIF);
+      break;
+    case OV5640_640x480:
+      wrSensorRegs16_8(OV5640_QSXGA2VGA);
+      break;
+    case OV5640_800x480:
+      wrSensorRegs16_8(OV5640_QSXGA2WVGA);
+      break;
+    case OV5640_1024x768:
+      wrSensorRegs16_8(OV5640_QSXGA2XGA);
+      break;
+    case OV5640_1280x960:
+      wrSensorRegs16_8(OV5640_QSXGA2SXGA);
+      break;
+    case OV5640_1600x1200:
+      wrSensorRegs16_8(OV5640_QSXGA2UXGA);
+      break;
+    case OV5640_2048x1536:
+      wrSensorRegs16_8(OV5640_QSXGA2QXGA);
+      break;
+    case OV5640_2592x1944:
+      wrSensorRegs16_8(OV5640_JPEG_QSXGA);
+      break;
+    default:
+      //320x240
+      wrSensorRegs16_8(OV5640_QSXGA2QVGA);
+      break;
+  }
+#endif
+}
+
 void ArduCAM:: OV5642_set_JPEG_size(unsigned char size)
-{ 
+{
   switch (size)
   {
     case OV5642_320x240:
@@ -287,25 +327,25 @@ void ArduCAM:: OV5642_set_JPEG_size(unsigned char size)
 unsigned char ArduCAM:: wrSensorReg8_8(int regID, int regDat)
 {
 	delay_us(10);
-	sccb_bus_start();                          
-	if(sccb_bus_write_byte(sensor_addr) == 0)         
+	sccb_bus_start();
+	if(sccb_bus_write_byte(sensor_addr) == 0)
 	{
-		sccb_bus_stop();                        
+		sccb_bus_stop();
 		return 1;
 	}
 	delay_us(10);
 	if(sccb_bus_write_byte(regID) == 0)
 	{
-		sccb_bus_stop();                              
-		return 2;                                       
+		sccb_bus_stop();
+		return 2;
 	}
 	delay_us(10);
-	if(sccb_bus_write_byte(regDat)==0)                    
+	if(sccb_bus_write_byte(regDat)==0)
 	{
-		sccb_bus_stop();                                 
+		sccb_bus_stop();
 		return 3;
 	}
-	sccb_bus_stop();                                    
+	sccb_bus_stop();
 	return 0;
 }
 
@@ -313,35 +353,35 @@ unsigned char ArduCAM:: wrSensorReg8_8(int regID, int regDat)
 unsigned char ArduCAM:: rdSensorReg8_8(unsigned char regID, unsigned char* regDat)
 {
 	delay_us(10);
-	
+
 	sccb_bus_start();
-	if(sccb_bus_write_byte(sensor_addr) == 0)                 
+	if(sccb_bus_write_byte(sensor_addr) == 0)
 	{
-		sccb_bus_stop();                                
+		sccb_bus_stop();
 		//goto start;
-		return 1;                                        
+		return 1;
 	}
 	delay_us(10);
 	if(sccb_bus_write_byte(regID)==0)//ID
 	{
-		sccb_bus_stop();                                  
+		sccb_bus_stop();
 		//goto start;
-		return 2;                                       
+		return 2;
 	}
-	sccb_bus_stop();                                   
-	delay_us(10);	
+	sccb_bus_stop();
+	delay_us(10);
 	sccb_bus_start();
-	if(sccb_bus_write_byte(sensor_addr|0x01)==0)                    
+	if(sccb_bus_write_byte(sensor_addr|0x01)==0)
 	{
-		sccb_bus_stop();                                   
+		sccb_bus_stop();
 		//goto start;
-		return 3;                                          
+		return 3;
 	}
 	delay_us(10);
-	*regDat = sccb_bus_read_byte();                    
-	sccb_bus_send_noack();                                
-	sccb_bus_stop();                                      
-	return 0;                
+	*regDat = sccb_bus_read_byte();
+	sccb_bus_send_noack();
+	sccb_bus_stop();
+	return 0;
 }
 
 //I2C Array Write 8bit address, 8bit data
@@ -390,7 +430,7 @@ unsigned char ArduCAM:: wrSensorReg16_8(int regID, int regDat)
 		return(0);
 	}
   sccb_bus_stop();
-	
+
   return(1);
 }
 
@@ -440,7 +480,7 @@ int ArduCAM:: rdSensorRegs16_8(const struct sensor_reg reglist[])
 
 unsigned char ArduCAM:: rdSensorReg16_8(unsigned int regID, unsigned char* regDat)
 {
-	sccb_bus_start();                  
+	sccb_bus_start();
 	if(0==sccb_bus_write_byte(0x78))
 	{
 		sccb_bus_stop();
@@ -461,11 +501,11 @@ unsigned char ArduCAM:: rdSensorReg16_8(unsigned int regID, unsigned char* regDa
 	}
 	delay_us(20);
 	sccb_bus_stop();
-	
+
 	delay_us(20);
-	
-	
-	sccb_bus_start();                 
+
+
+	sccb_bus_start();
 	if(0==sccb_bus_write_byte(0x79))
 	{
 		sccb_bus_stop();
@@ -513,7 +553,7 @@ void ArduCAM:: resetFirmware(){
    //Flush the FIFO
    flush_fifo();
    //Start capture
-   start_capture(); 
+   start_capture();
   // printf("Start capture...\r\n");
    while(!get_bit(ARDUCHIP_TRIG , CAP_DONE_MASK)){;}
    length = read_fifo_length();
@@ -530,32 +570,32 @@ void ArduCAM:: resetFirmware(){
    while (count--) {
       temp_last = temp;
       temp = spiSendReceive(0x00);
-    
+
      //Read JPEG data from FIFO
       if ( (temp == 0xD9) && (temp_last == 0xFF) ) //If find the end ,break while,
       {
         is_end = 1;
-        dataBuf->pu8ImageData[i++] = temp;  //save the last  0XD9   
+        dataBuf->pu8ImageData[i++] = temp;  //save the last  0XD9
         dataBuf->dataLength = i-1;
 #if 0
         printf("Image save OK.\r\n");
         printf("The first byte is %x\r\n", dataBuf->pu8ImageData[0]);
         printf("The end byte is %x\r\n", dataBuf->pu8ImageData[i-1]);
-#endif                  
+#endif
        // is_header = false;
         break;
-      } 
-      if (is_header == true)
-      { 
-        dataBuf->pu8ImageData[i++] = temp;       
       }
-      
+      if (is_header == true)
+      {
+        dataBuf->pu8ImageData[i++] = temp;
+      }
+
       else if ((temp == 0xD8) && (temp_last == 0xFF))
       {
         is_header = true;
         dataBuf->pu8ImageData[i++] = temp_last;
-        dataBuf->pu8ImageData[i++] = temp; 
-      } 
+        dataBuf->pu8ImageData[i++] = temp;
+      }
    	}
    if(is_header == 0){
      printf("The %d camera can't find the header\r\n",dataBuf->cameraID);
@@ -568,7 +608,7 @@ void ArduCAM:: resetFirmware(){
      errorFlag = 1;
    }else {
       is_end = 0;
-   }   
+   }
    if(errorFlag){
      dataBuf->errCount ++;
      printf("The %d frame is error\r\n",dataBuf->errCount);
@@ -582,7 +622,7 @@ void ArduCAM:: resetFirmware(){
 
 void ArduCAM:: Arducam_bus_detect(){
 unsigned char vid, pid,temp ;
-	 while(1){	 
+	 while(1){
 		 write_reg(ARDUCHIP_TEST1, 0x55  );
 		 temp = read_reg(ARDUCHIP_TEST1  );
 		 if (temp != 0x55){
@@ -590,12 +630,12 @@ unsigned char vid, pid,temp ;
 			 delay_ms(1000);
 			 continue;
 		 }
-		 
+
 		 else{
 			  printf("SPIinterface OK!\r\n");
 			 break;
 		 }
-	 }	 
+	 }
 
  while(1){
    sensor_addr = 0x60;
@@ -606,7 +646,7 @@ unsigned char vid, pid,temp ;
    printf("Can't find OV2640 module!\r\n");
    else{
 		  sensor_model =  OV2640 ;
-		  printf("OV2640 detected.\r\n");   
+		  printf("OV2640 detected.\r\n");
 		  break;
 	 }
 	 sensor_addr = 0x78;
@@ -619,7 +659,7 @@ unsigned char vid, pid,temp ;
 			printf("OV5640 detected.\r\n");
 		  break;
 	 }
-	 
+
 	 sensor_addr = 0x78;
 	 rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid);
    rdSensorReg16_8(OV5642_CHIPID_LOW, &pid);
@@ -629,8 +669,8 @@ unsigned char vid, pid,temp ;
 	 }
    else{
 		 sensor_model =  OV5642 ;
-		 printf("OV5642 detected.\r\n"); 
-		 break;		 
+		 printf("OV5642 detected.\r\n");
+		 break;
 	 }
   }
 }

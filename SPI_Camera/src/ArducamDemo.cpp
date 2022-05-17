@@ -18,7 +18,8 @@ void  dataParse(char* databuf);
 void  INThandler(int sig);
 
 
-int sockfd, newsockfd, portno, clilen;
+int sockfd, newsockfd, portno;
+socklen_t clilen;
 struct sockaddr_in serv_addr, cli_addr;
 struct sigaction sa;
 unsigned char start_read_data = 0;
@@ -29,8 +30,10 @@ unsigned int length_cam1;
 //unsigned int length_cam3;
 //unsigned int length_cam4;
 
+char revCmdData[CMD_BUF_SIZE];
+imageData myImageData;
 
-
+ArduCAM myCAM(OV5642,CAM_CS1);
 
 
 int main(int argc, char *argv[])
@@ -39,17 +42,16 @@ int main(int argc, char *argv[])
   int on = 1;
   pthread_t _readData;//_sendData;
   pioInit();
-  ArduCAM_CS_init( CAM_CS1, -1, -1, -1 );   // init the cs
-  // ArduCAM_CS_init( CAM_CS1, CAM_CS2, CAM_CS3, CAM_CS4 );   // init the cs
+  myCAM.Arducam_CS_Init();   // init the cs
 
   sccb_bus_init();
   spiInit(4000000, 0); //8MHZ
   //Arducam_bus_detect( CAM_CS1, CAM_CS2, CAM_CS3, CAM_CS4 );   // detect the SPI bus
-  Arducam_bus_detect( CAM_CS1, -1, -1, -1 );
+  myCAM.Arducam_bus_detect();
 
-  resetFirmware( CAM_CS1, -1, -1, -1 );  //reset the firmware
+  myCAM.resetFirmware();  //reset the firmware
   // resetFirmware( CAM_CS1, CAM_CS2, CAM_CS3, CAM_CS4);  //reset the firmware
-  ArduCAM_Init(sensor_model);
+  myCAM.InitCAM();
   signal(SIGINT, INThandler);
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
@@ -93,7 +95,7 @@ int main(int argc, char *argv[])
     printf("Waitting connection...\r\n");
 
     /* Accept actual connection from the client */
-    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, (void *) &clilen);
+    newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
     if (newsockfd < 0) {
       printf("error\r\n");
     }
@@ -126,10 +128,10 @@ int main(int argc, char *argv[])
 void *readDataThread(void *arg) {
   while (1) {
     if (start_read_data == 1) {
-      singleCapture(CAM_CS1);
-	  
-      sendbuf_cam1 = readbuf;
-      length_cam1 = length;
+        myCAM.getOneframe(&myImageData);
+
+      uint8_t *sendbuf_cam1 = myImageData.pu8ImageData;
+      length_cam1 = myImageData.dataLength;
       if (sockfd) {
         write(newsockfd, sendbuf_cam1 , length_cam1);
       }
@@ -191,7 +193,7 @@ void  INThandler(int sig)
          "Do you really want to quit? [y/n] ");
   c = getchar();
   if (c == 'y' || c == 'Y') {
-  	
+
     if (newsockfd < 0) {
       close(newsockfd);
       close(sockfd);
@@ -209,8 +211,8 @@ void  INThandler(int sig)
 
 
 void  dataParse(char* databuf) {
-  char* response = "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n";
-  char* net_check = "HTTP/1.1 200 OK\r\n\r\n 123";
+  const char* response = "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n";
+  const char* net_check = "HTTP/1.1 200 OK\r\n\r\n 123";
 
   if (strchr(databuf, 0)) {
     write(newsockfd, net_check , strlen(net_check));
@@ -221,121 +223,121 @@ void  dataParse(char* databuf) {
   }
   if (strstr(databuf, "ql=0")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_160x120);
+      myCAM.OV2640_set_JPEG_size(OV2640_160x120);
       printf("Set the resolution to OV2640_160x120 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_320x240);
+      myCAM.OV5640_set_JPEG_size(OV5640_320x240);
       printf("Set the resolution to OV5640_320x240 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_320x240);
+      myCAM.OV5642_set_JPEG_size(OV5642_320x240);
       printf("Set the resolution to OV5642_320x240 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=1")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_176x144);
+      myCAM.OV2640_set_JPEG_size(OV2640_176x144);
       printf("Set the resolution to OV2640_176x144 successfully\r\n");
 
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_352x288);
+      myCAM.OV5640_set_JPEG_size(OV5640_352x288);
       printf("Set the resolution to OV5640_352x288 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_640x480);
+      myCAM.OV5642_set_JPEG_size(OV5642_640x480);
       printf("Set the resolution to OV5642_640x480 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=2")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_320x240);
+      myCAM.OV2640_set_JPEG_size(OV2640_320x240);
       printf("Set the resolution to OV2640_320x240 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_640x480);
+      myCAM.OV5640_set_JPEG_size(OV5640_640x480);
       printf("Set the resolution to OV5640_640x480 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_1024x768);
+      myCAM.OV5642_set_JPEG_size(OV5642_1024x768);
       printf("Set the resolution to OV5642_1024x768 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=3")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_352x288);
+      myCAM.OV2640_set_JPEG_size(OV2640_352x288);
       printf("Set the resolution to OV2640_352x288 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_800x480);
+      myCAM.OV5640_set_JPEG_size(OV5640_800x480);
       printf("Set the resolution to OV5640_800x480 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_1280x960);
+      myCAM.OV5642_set_JPEG_size(OV5642_1280x960);
       printf("Set the resolution to OV5642_1280x960 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=4") ) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_640x480);
+      myCAM.OV2640_set_JPEG_size(OV2640_640x480);
       printf("Set the resolution to OV2640_640x480 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_1024x768);
+      myCAM.OV5640_set_JPEG_size(OV5640_1024x768);
       printf("Set the resolution to OV5640_1024x768 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_1600x1200);
+      myCAM.OV5642_set_JPEG_size(OV5642_1600x1200);
       printf("Set the resolution to OV5642_1600x1200 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=5")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_800x600);
+      myCAM.OV2640_set_JPEG_size(OV2640_800x600);
       printf("Set the resolution to OV2640_800x600 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_1280x960);
+      myCAM.OV5640_set_JPEG_size(OV5640_1280x960);
       printf("Set the resolution to OV5640_1280x960 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_2048x1536);
+      myCAM.OV5642_set_JPEG_size(OV5642_2048x1536);
       printf("Set the resolution to OV5642_2048x1536 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=6")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_1024x768);
+      myCAM.OV2640_set_JPEG_size(OV2640_1024x768);
       printf("Set the resolution to OV2640_1024x768 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_1600x1200);
+      myCAM.OV5640_set_JPEG_size(OV5640_1600x1200);
       printf("Set the resolution to OV5640_1600x1200 successfully\r\n");
     }
     else if (sensor_model == OV5642) {
-      OV5642_set_JPEG_size(OV5642_2592x1944);
+      myCAM.OV5642_set_JPEG_size(OV5642_2592x1944);
       printf("Set the resolution to OV5642_2592x1944 successfully\r\n");
 
     }
   }
   else if (strstr(databuf, "ql=7")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_1280x1024);
+      myCAM.OV2640_set_JPEG_size(OV2640_1280x1024);
       printf("Set the resolution to OV2640_1280x1024 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_2048x1536);
+      myCAM.OV5640_set_JPEG_size(OV5640_2048x1536);
       printf("Set the resolution to OV5640_2048x1536 successfully\r\n");
     }
   }
   else if (strstr(databuf, "ql=8")) {
     if (sensor_model == OV2640) {
-      OV2640_set_JPEG_size(OV2640_1600x1200);
+      myCAM.OV2640_set_JPEG_size(OV2640_1600x1200);
       printf("Set the resolution to OV2640_1600x1200 successfully\r\n");
     }
     else if (sensor_model == OV5640) {
-      OV5640_set_JPEG_size(OV5640_2592x1944);
+      myCAM.OV5640_set_JPEG_size(OV5640_2592x1944);
       printf("Set the resolution to OV5640_2592x1944 successfully\r\n");
     }
   }
